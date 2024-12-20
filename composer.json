@@ -1,0 +1,40 @@
+{
+    "require": {
+        "ext-pdo": "*",
+        "vlucas/phpdotenv": "^5.3",
+        "psr/container": "^2.0",
+        "ext-curl": "*",
+        "laminas/laminas-diactoros": "^3.5",
+        "laminas/laminas-httphandlerrunner": "^2.11",
+        "psr/http-server-middleware": "^1.0",
+        "middlewares/error-handler": "^3.0",
+        "middlewares/whoops": "^2.0",
+        "middlewares/payload": "^3.0",
+        "middlewares/negotiation": "^2.1",
+        "middlewares/minifier": "^2.0",
+        "middlewares/encoder": "^2.1",
+        "middlewares/shutdown": "^2.0",
+        "middlewares/honeypot": "^2.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": [
+                "app/",
+                "config/"
+            ],
+            "Lib\\": "lib/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/"
+        }
+    },
+    "config": {
+        "optimize-autoloader": true
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^9.5",
+        "symfony/var-dumper": "^6.4"
+    }
+}
