@@ -18,11 +18,11 @@
         </testsuite>
     </testsuites>
 
-    <!-- <coverage>
+    <coverage>
         <report>
             <html outputDirectory="tests/coverageReports" lowUpperBound="50" highLowerBound="90"/>    
         </report>
-    </coverage> -->
+    </coverage>
 
 
     <source restrictDeprecations="true" restrictNotices="true" restrictWarnings="true">
