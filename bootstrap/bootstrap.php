@@ -9,4 +9,6 @@ $request = ServerRequestFactory::fromGlobals();
 
 return (new Application(
     $request
-))->boot();
+))->withRouting(
+    __DIR__ . '/../routes/http.php',
+)->boot();

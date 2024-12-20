@@ -23,6 +23,8 @@ $router->setDefaultNamespace('App\Kernels\Http\Controllers');
 |--------------------------------------------------------------------------
 | Base Routes
 |--------------------------------------------------------------------------
+|
+|
 */
 
 $router->get('/', ['HomeController', 'index']);
