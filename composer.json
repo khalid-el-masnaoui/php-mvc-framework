@@ -1,4 +1,13 @@
 {
+    "name": "malidkha/php-mvc-framework",
+    "description": "Just another php mvc framework",
+    "license": "proprietary",
+    "authors": [
+        {
+            "name": "khalid-el-masnaoui",
+            "email": "malidkha.elmasnaoui@gmail.com"
+        }
+    ],
     "require": {
         "ext-pdo": "*",
         "vlucas/phpdotenv": "^5.3",
