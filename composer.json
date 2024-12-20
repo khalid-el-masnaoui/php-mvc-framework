@@ -14,15 +14,29 @@
         "middlewares/minifier": "^2.0",
         "middlewares/encoder": "^2.1",
         "middlewares/shutdown": "^2.0",
-        "middlewares/honeypot": "^2.0"
+        "middlewares/honeypot": "^2.0",
+        "hassankhan/config": "^3.2"
+    },
+    "require-dev": {
+        "symfony/var-dumper": "^6.4",
+        "phpunit/phpunit": "^10.5",
+        "rector/rector": "^1.2",
+        "fakerphp/faker": "^1.24",
+        "phpstan/phpstan": "^1.12",
+        "phpunit/php-code-coverage": "^10.1",
+        "mockery/mockery": "^1.6",
+        "friendsofphp/php-cs-fixer": "^3.64",
+        "squizlabs/php_codesniffer": "*",
+        "shipmonk/composer-dependency-analyser": "^1.8",
+        "qossmic/deptrac": "^2.0"
     },
     "autoload": {
         "psr-4": {
-            "App\\": [
-                "app/",
-                "config/"
-            ]
-        }
+            "App\\": "app/"
+        },
+        "files": [
+            "app/Lib/Utils/Functions.php"
+        ]
     },
     "autoload-dev": {
         "psr-4": {
@@ -32,8 +46,40 @@
     "config": {
         "optimize-autoloader": true
     },
-    "require-dev": {
-        "phpunit/phpunit": "^9.5",
-        "symfony/var-dumper": "^6.4"
+    "scripts": {
+        "cs-check": "phpcs",
+        "cs-fix": "phpcbf",
+        "cs-fixer": [
+            "php-cs-fixer fix app",
+            "php-cs-fixer fix tests"
+        ],
+        "phpstan": "phpstan",
+        "rector-dry": "rector process --dry-run --config rector.dist.php",
+        "run-all-checks": [
+            "phpcs",
+            "php-cs-fixer check app",
+            "php-cs-fixer check tests",
+            "phpstan",
+            "rector process --dry-run --config rector.dist.php"
+        ],
+        "run-all-fixes": [
+            "phpcbf",
+            "php-cs-fixer fix app",
+            "php-cs-fixer fix tests",
+            "phpstan",
+            "rector process --config rector.dist.php"
+        ],
+        "run-all-checks-and-fixes": [
+            "phpcs",
+            "phpcbf",
+            "php-cs-fixer check app",
+            "php-cs-fixer check tests",
+            "php-cs-fixer fix app",
+            "php-cs-fixer fix tests",
+            "phpstan",
+            "rector process --config rector.dist.php"
+        ],
+        "unused-pkg": "composer-dependency-analyser",
+        "test": "phpunit"
     }
 }

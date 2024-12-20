@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Kernels\Http\Controllers;
 
 use Middlewares\JsonPayload;
-use Laminas\Diactoros\Response;
 use App\Core\Services\Views\View;
 use Middlewares\UrlEncodePayload;
 use App\Core\Attributes\Routes\Get;
@@ -19,15 +18,16 @@ use App\Core\Attributes\Middlewares\GetMiddleware;
 use App\Core\Attributes\Middlewares\PutMiddleware;
 use App\Core\Attributes\Middlewares\PostMiddleware;
 use App\Kernels\Http\Middlewares\SetAttributesMiddleware;
+use Psr\Http\Message\ResponseInterface;
 
 class HomeController
 {
     // #[Get('/')]
     #[GetMiddleware('/', [new SetAttributesMiddleware()])]
-    public function index()
+    public function index(): ResponseInterface
     {
         // throw new \Exception("Error Processing Request", 501);
-        return new HtmlResponse((string) View::make('index'), 200, ["special-header" => "special-header-value"]);
+        return new HtmlResponse((string) View::make('index'), 200, ['special-header' => 'special-header-value']);
 
         // return (string) View::make('index');
         // return new RedirectResponse('/user/login');
@@ -36,16 +36,16 @@ class HomeController
 
     #[Post('/store')]
     #[PostMiddleware('/store', [new JsonPayload()])]
-    public function store(ServerRequestInterface $request): Response
+    public function store(ServerRequestInterface $request): ResponseInterface
     {
         // throw new \Exception("Error Processing Request", 501);
-        return new JsonResponse($request->getParsedBody(), 200, ["special-header" => "special-header-value"]);
+        return new JsonResponse($request->getParsedBody(), 200, ['special-header' => 'special-header-value']);
     }
 
     #[Put('/update')]
     #[PutMiddleware('/update', [new UrlEncodePayload()])]
-    public function update(ServerRequestInterface $request): Response
+    public function update(ServerRequestInterface $request): ResponseInterface
     {
-        return new JsonResponse($request->getParsedBody(), 200, ["special-header" => "special-header-value"]);
+        return new JsonResponse($request->getParsedBody(), 200, ['special-header' => 'special-header-value']);
     }
 }

@@ -4,26 +4,23 @@ declare(strict_types=1);
 
 namespace App\Lib\Dispatcher;
 
-use App\Kernels\Http\Handlers\NotFoundHandler;
 use Closure;
 use InvalidArgumentException;
+use App\Lib\Dispatcher\Matchers\Path;
 use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
-use App\Lib\Dispatcher\Matchers\Path;
+use App\Kernels\Http\Handlers\NotFoundHandler;
 
 class Dispatcher implements MiddlewareInterface, RequestHandlerInterface
 {
-    /** @param MiddlewareInterface[]|string[]|array[]|Closure[] $middlewares */
+    /** @param array<string|Closure|MiddlewareInterface|array<string|bool|Closure|MiddlewareInterface>> $middlewares */
     public function __construct(private array $middlewares, private RequestHandlerInterface $requestHandler = (new NotFoundHandler()), private ?ContainerInterface $container = null)
     {
     }
 
-    /**
-     * Magic method to execute the dispatcher as a callable
-     */
     public function __invoke(ServerRequestInterface $request): ResponseInterface
     {
         return $this->dispatch($request);
@@ -86,9 +83,6 @@ class Dispatcher implements MiddlewareInterface, RequestHandlerInterface
         throw new InvalidArgumentException(sprintf('No valid middleware provided (%s)', is_object($middleware) ? get_class($middleware) : gettype($middleware)));
     }
 
-    /**
-     * Dispatch the request, return a response.
-     */
     public function dispatch(ServerRequestInterface $request): ResponseInterface
     {
         reset($this->middlewares);
@@ -122,7 +116,7 @@ class Dispatcher implements MiddlewareInterface, RequestHandlerInterface
     private static function createMiddlewareFromClosure(Closure $handler): MiddlewareInterface
     {
         return new class ($handler) implements MiddlewareInterface {
-            private $handler;
+            private Closure $handler;
 
             public function __construct(Closure $handler)
             {

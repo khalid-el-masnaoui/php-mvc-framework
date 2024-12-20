@@ -16,8 +16,8 @@ class CustomJsonErrorFormatter extends AbstractFormatter
     protected function format(Throwable $error, string $contentType): string
     {
         $json = [
-            'status' => 0,
-            'code' => $error->getCode(),
+            'status'  => 0,
+            'code'    => $error->getCode(),
             'message' => $error->getMessage(),
         ];
 

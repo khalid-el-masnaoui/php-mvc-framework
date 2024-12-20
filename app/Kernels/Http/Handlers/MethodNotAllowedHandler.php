@@ -14,6 +14,6 @@ class MethodNotAllowedHandler implements RequestHandlerInterface
     /** @return ResponseInterface */
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
-        return new TextResponse("Http Method Not Allowed", 405);
+        return new TextResponse('Http Method Not Allowed', 405);
     }
 }

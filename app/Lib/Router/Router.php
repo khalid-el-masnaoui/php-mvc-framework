@@ -34,6 +34,7 @@ class Router implements RequestHandlerInterface
 
     protected string $currentGroupPrefix = '';
 
+    /** @var MiddlewareInterface[]> $currentGroupMiddlewares */
     protected array $currentGroupMiddlewares = [];
 
     protected string $defaultNamespace = '';
@@ -42,11 +43,13 @@ class Router implements RequestHandlerInterface
     {
     }
 
+    /** @return array<string,array<string,array<callable|object>>> */
     public function getRoutes(): array
     {
         return $this->routes;
     }
 
+    /** @return array<string,array<string,MiddlewareInterface[]>>  */
     public function getMiddlewares(): array
     {
         return $this->middlewares;
@@ -59,10 +62,11 @@ class Router implements RequestHandlerInterface
 
     public function setDefaultNamespace(string $namespace): void
     {
-        $this->defaultNamespace = str_ends_with($namespace, "\\") ? $namespace : "{$namespace}\\";
+        $this->defaultNamespace = str_ends_with($namespace, '\\') ? $namespace : "{$namespace}\\";
     }
 
-    public function registerRoutesFromControllerAttributes(array $controllers)
+    /** @param class-string[] $controllers */
+    public function registerRoutesFromControllerAttributes(array $controllers): void
     {
         foreach ($controllers as $controller) {
             $reflectionController = new \ReflectionClass($controller);
@@ -79,7 +83,8 @@ class Router implements RequestHandlerInterface
         }
     }
 
-    public function registerMiddlewaresFromControllerAttributes(array $controllers)
+    /** @param class-string[] $controllers */
+    public function registerMiddlewaresFromControllerAttributes(array $controllers): void
     {
         foreach ($controllers as $controller) {
             $reflectionController = new \ReflectionClass($controller);
@@ -99,15 +104,16 @@ class Router implements RequestHandlerInterface
     public function loadFrom(string $filename): void
     {
         if (file_exists($filename)) {
+            /** @var $router */
             require_once $filename;
 
             $currentRoutes = $this->getRoutes();
-            $loadedRoutes = $router->getRoutes();
+            $loadedRoutes  = $router->getRoutes();
 
             $currentMiddlewares = $this->getMiddlewares();
-            $loadedMiddlewares = $router->getMiddlewares();
+            $loadedMiddlewares  = $router->getMiddlewares();
 
-            $newRoutes = [];
+            $newRoutes      = [];
             $newMiddlewares = [];
             foreach (HttpMethod::values() as $method) {
                 $newRoutes[$method]  = array_merge($loadedRoutes[$method] ?? [], $currentRoutes[$method] ?? []);
@@ -119,12 +125,15 @@ class Router implements RequestHandlerInterface
                 }
             }
 
-            $this->routes = $newRoutes;
-            $this->middlewares = $newMiddlewares;
+            $this->routes      = $newRoutes;
+            $this->middlewares = $newMiddlewares; // @phpstan-ignore assign.propertyType
         }
     }
 
-    /** @param MiddlewareInterface[] $middlewares */
+    /**
+     * @param string[] $handler
+     * @param MiddlewareInterface[] $middlewares
+    */
     public function addRoute(string $method, string $route, callable|array $handler, array $middlewares = []): void
     {
         $method = $this->parseMethod($method);
@@ -132,40 +141,55 @@ class Router implements RequestHandlerInterface
         $route                         = $this->currentGroupPrefix . $route;
         $route                         = $this->parseRoute($route);
 
-        $handler[0] = $this->defaultNamespace . ltrim($handler[0], "\\");
-        $this->routes[$method][$route] = $handler;
+        $handler[0]                    = $this->defaultNamespace . ltrim($handler[0], '\\');
+        $this->routes[$method][$route] = $handler; // @phpstan-ignore assign.propertyType
 
-        $middlewares = $middlewares === [] ? $this->currentGroupMiddlewares : $middlewares;
+        $middlewares                        = $middlewares === [] ? $this->currentGroupMiddlewares : $middlewares;
         $this->middlewares[$method][$route] = $middlewares;
-
     }
 
-    public function addGroup(string $prefix, callable|array $callback, array $middlewares = []): void
+    /** @param MiddlewareInterface[] $middlewares */
+    public function addGroup(string $prefix, callable $callback, array $middlewares = []): void
     {
-        $previousGroupPrefix      = $this->currentGroupPrefix;
-        $this->currentGroupPrefix = $previousGroupPrefix . $prefix;
+        $previousGroupPrefix           = $this->currentGroupPrefix;
+        $this->currentGroupPrefix      = $previousGroupPrefix . $prefix;
         $this->currentGroupMiddlewares = $middlewares;
         $callback($this);
-        $this->currentGroupPrefix = $previousGroupPrefix;
+        $this->currentGroupPrefix      = $previousGroupPrefix;
         $this->currentGroupMiddlewares = [];
-
     }
 
+    /**
+     * @param string[] $handler
+     * @param MiddlewareInterface[] $middlewares
+    */
     public function get(string $route, callable|array $handler, array $middlewares = []): void
     {
         $this->addRoute('GET', $route, $handler, $middlewares);
     }
 
+    /**
+     * @param string[] $handler
+     * @param MiddlewareInterface[] $middlewares
+    */
     public function post(string $route, callable|array $handler, array $middlewares = []): void
     {
         $this->addRoute('POST', $route, $handler, $middlewares);
     }
 
+    /**
+     * @param string[] $handler
+     * @param MiddlewareInterface[] $middlewares
+    */
     public function put(string $route, callable|array $handler, array $middlewares = []): void
     {
         $this->addRoute('PUT', $route, $handler, $middlewares);
     }
 
+    /**
+     * @param string[] $handler
+     * @param MiddlewareInterface[] $middlewares
+    */
     public function delete(string $route, callable|array $handler, array $middlewares = []): void
     {
         $this->addRoute('DELETE', $route, $handler, $middlewares);
@@ -176,8 +200,8 @@ class Router implements RequestHandlerInterface
     {
         $method = $this->parseMethod($method);
 
-        $route                         = $this->currentGroupPrefix . $route;
-        $route                         = $this->parseRoute($route);
+        $route                              = $this->currentGroupPrefix . $route;
+        $route                              = $this->parseRoute($route);
         $this->middlewares[$method][$route] = array_merge($this->middlewares[$method][$route] ?? [], $middlewares);
     }
 
@@ -192,7 +216,7 @@ class Router implements RequestHandlerInterface
     {
         $parsedMethod =  strtoupper(trim($method));
         if (!in_array($parsedMethod, HttpMethod::values())) {
-            throw new RequestHttpMethodUnSupportedException("Http Method Not Allowed", 405);
+            throw new RequestHttpMethodUnSupportedException('Http Method Not Allowed', 405);
         }
 
         return $parsedMethod;
@@ -211,22 +235,25 @@ class Router implements RequestHandlerInterface
         // Try to match the route using exact matching
         $handler = $this->routes[$method][$path] ?? [];
 
-        return $this->dispatch($handler, [$request]);
-
+        return $this->dispatch($handler, [$request]); // @phpstan-ignore argument.type
     }
 
-    protected function dispatch(callable|array $handler, $args = []): ResponseInterface
+    /**
+     * @param string[] $handler
+     * @param mixed[] $args
+    */
+    protected function dispatch(callable|array $handler, array $args = []): ResponseInterface
     {
         $found = true;
 
-        $controllerResponse = "";
+        $controllerResponse = '';
         if (is_callable($handler)) {
             $controllerResponse = call_user_func($handler, $args);
         }
 
         if (empty($handler)) {
-            $found = false;
-            $handler = ["", ""];
+            $found   = false;
+            $handler = ['', ''];
         }
 
         [$class, $method] = $handler;
@@ -235,11 +262,10 @@ class Router implements RequestHandlerInterface
             $class = $this->container->get($class);
 
             if (method_exists($class, $method)) {
-                $controllerResponse = call_user_func_array([$class, $method], $args);
+                $controllerResponse = call_user_func_array([$class, $method], $args); // @phpstan-ignore argument.type
             }
         }
 
-
-        return BuildResponse::get($controllerResponse, $found);
+        return BuildResponse::get($controllerResponse, $found); // @phpstan-ignore method.staticCall
     }
 }

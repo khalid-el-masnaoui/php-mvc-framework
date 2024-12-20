@@ -1,12 +1,12 @@
 <?php
 
-
 declare(strict_types=1);
 
 namespace App\Kernels;
 
-use App\Config;
+use Closure;
 use Dotenv\Dotenv;
+use Noodlehaus\Config;
 use Middlewares\Whoops;
 use Middlewares\Minifier;
 use Middlewares\Shutdown;
@@ -19,12 +19,13 @@ use Middlewares\ContentEncoding;
 use App\Core\Services\Views\View;
 use App\Lib\Dispatcher\Dispatcher;
 use Psr\Container\ContainerInterface;
+use Psr\Http\Server\MiddlewareInterface;
 use Laminas\HttpHandlerRunner\Emitter\SapiEmitter;
 use Laminas\HttpHandlerRunner\Emitter\EmitterInterface;
 use App\Kernels\Http\Middlewares\ResponseTimeMiddleware;
+use App\Kernels\Http\Middlewares\Errors\CustomPlainFormatter;
 use App\Kernels\Http\Middlewares\Errors\CustomHtmlErrorFormatter;
 use App\Kernels\Http\Middlewares\Errors\CustomJsonErrorFormatter;
-use App\Kernels\Http\Middlewares\Errors\CustomPlainFormatter;
 
 class Kernel
 {
@@ -38,7 +39,6 @@ class Kernel
 
     private static ?EmitterInterface $responseEmitter = null;
 
-
     public static function getContainer(): ContainerInterface
     {
         if (self::$container !== null) {
@@ -47,9 +47,9 @@ class Kernel
 
         $container = new Container();
         $container->set(ContainerInterface::class, Container::class);
+        // $container->set(Config::class, concrete: Kernel::getConfig());
 
         self::$container = $container;
-
 
         return self::$container;
     }
@@ -60,10 +60,10 @@ class Kernel
             return self::$config;
         }
 
-        $dotenv = Dotenv::createImmutable(__DIR__."/../../");
+        $dotenv = Dotenv::createImmutable(__DIR__ . '/../../');
         $dotenv->load();
 
-        self::$config = new Config($_ENV);
+        self::$config = new Config(__DIR__ . '/../../config');
 
         return self::$config;
     }
@@ -78,8 +78,7 @@ class Kernel
 
         //load and register routes and their middlewares (from file and attributes)
         Kernel::registerRoutesAndMiddlewaresFromAttributes();
-        self::$router->loadFrom(__DIR__."/../../routes/http.php");
-
+        self::$router->loadFrom(__DIR__ . '/../../routes/http.php');
 
         return self::$router;
     }
@@ -108,7 +107,6 @@ class Kernel
 
     private static function registerRoutesAndMiddlewaresFromAttributes(): void
     {
-        #TODO
         $controllers = [
             'App\Kernels\Http\Controllers\HomeController'
         ];
@@ -120,16 +118,15 @@ class Kernel
         Kernel::getRouter()->registerMiddlewaresFromControllerAttributes(
             $controllers
         );
-
     }
 
+    /** @return array<string|Closure|MiddlewareInterface|array<string|bool|Closure|MiddlewareInterface>>  */
     private static function getMiddlewares(): array
     {
         $middlewares = [];
 
         $routeMiddlewares = Kernel::getRouter()->getMiddlewares();
         array_walk($routeMiddlewares, function ($routes, $httpMethod) use (&$middlewares): void {
-
             $httpMethod = strtolower($httpMethod);
             array_walk($routes, function ($registeredMiddlewares, $route) use (&$middlewares, $httpMethod): void {
                 if (empty($registeredMiddlewares)) {
@@ -141,25 +138,25 @@ class Kernel
                 foreach ($registeredMiddlewares as $middleware) {
                     $middlewares[] = [...$middlewareConditions, $middleware];
                 }
-
             });
         });
 
         return [...Kernel::getGlobalMiddlewares(), ...$middlewares];
     }
 
+    /** @return array<string|Closure|MiddlewareInterface|array<string|bool|Closure|MiddlewareInterface>> */
     private static function getGlobalMiddlewares(): array
     {
-        $errorHandler =  [Kernel::getConfig()->environment["debug"] === false , new ErrorHandler([
+        $errorHandler =  [Kernel::getConfig()->get('environment')['debug'] === false, new ErrorHandler([
             new CustomJsonErrorFormatter(),
             new CustomHtmlErrorFormatter(),
             new CustomPlainFormatter(),
             new CustomPlainFormatter(),
         ])];
 
-        $whoopsErrorHandler = [Kernel::getConfig()->environment["debug"] === true  ,new Whoops()];
+        $whoopsErrorHandler = [Kernel::getConfig()->get('environment')['debug'] === true, new Whoops()];
 
-        $maintenanceMiddleware = [Kernel::getConfig()->environment["maintenance"] === true, (new Shutdown())->retryAfter(60 * 5)->render(fn () => View::make('maintenance'))];
+        $maintenanceMiddleware = [Kernel::getConfig()->get('environment')['maintenance'] === true, (new Shutdown())->retryAfter(60 * 5)->render(fn () => View::make('maintenance'))];
 
         return [$errorHandler, $whoopsErrorHandler, $maintenanceMiddleware, new ResponseTimeMiddleware(), new GzipEncoder(), Minifier::html(),  Minifier::css(),  Minifier::js(), new ContentType(), new ContentEncoding()];
     }

@@ -10,6 +10,7 @@ use Psr\Container\ContainerInterface;
 
 class Container implements ContainerInterface
 {
+    /** @var mixed[] */
     private array $entries = [];
 
     public function get(string $id)
@@ -37,30 +38,31 @@ class Container implements ContainerInterface
         $this->entries[$id] = $concrete;
     }
 
-    public function resolve(string $id)
+    /** @throws NotFoundException|ContainerException */
+    public function resolve(string $id): object|null
     {
         // Inspect the class that we are trying to get from the container
         try {
-            $reflectionClass = new \ReflectionClass($id);
+            $reflectionClass = new \ReflectionClass($id); // @phpstan-ignore argument.type
         } catch (\ReflectionException $e) {
             throw new NotFoundException($e->getMessage(), $e->getCode(), $e);
         }
 
-        if (! $reflectionClass->isInstantiable()) {
+        if (!$reflectionClass->isInstantiable()) {
             throw new ContainerException('Class "' . $id . '" is not instantiable');
         }
 
         // Inspect the constructor of the class
         $constructor = $reflectionClass->getConstructor();
 
-        if (! $constructor) {
+        if (!$constructor) {
             return new $id();
         }
 
         //Inspect the constructor parameters (dependencies)
         $parameters = $constructor->getParameters();
 
-        if (! $parameters) {
+        if (!$parameters) {
             return new $id();
         }
 
@@ -70,7 +72,7 @@ class Container implements ContainerInterface
                 $name = $param->getName();
                 $type = $param->getType();
 
-                if (! $type) {
+                if (!$type) {
                     throw new ContainerException(
                         'Failed to resolve class "' . $id . '" because param "' . $name . '" is missing a type hint'
                     );
@@ -82,7 +84,7 @@ class Container implements ContainerInterface
                     );
                 }
 
-                if ($type instanceof \ReflectionNamedType && ! $type->isBuiltin()) {
+                if ($type instanceof \ReflectionNamedType && !$type->isBuiltin()) {
                     return $this->get($type->getName());
                 }
 

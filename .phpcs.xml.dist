@@ -1,0 +1,76 @@
+<ruleset name="coding-style">
+    <description>Coding style description</description>
+
+    <!-- 2. Files -->
+
+    <!-- 2.1. PHP Tags -->
+
+    <!-- PHP code MUST use the long <?php ?> tags or the short-echo <?= ?> tags; it MUST NOT use the other tag variations. -->
+    <rule ref="Generic.PHP.DisallowShortOpenTag.EchoFound">
+        <severity>0</severity>
+    </rule>
+
+    <!-- 2.2. Character Encoding -->
+
+    <!-- PHP code MUST use only UTF-8 without BOM. -->
+    <rule ref="Generic.Files.ByteOrderMark"/>
+
+    <rule ref="Generic.PHP.DisallowShortOpenTag"/>
+    <rule ref="Generic.Commenting.Todo"/>
+    <rule ref="Generic.ControlStructures.InlineControlStructure"/>
+
+    <!-- There MUST NOT be more than one statement per line. -->
+    <rule ref="Generic.Formatting.DisallowMultipleStatements"/>
+    <rule ref="Generic.Formatting.SpaceAfterCast"/>
+    <rule ref="Generic.NamingConventions.ConstructorName"/>
+    <rule ref="Generic.PHP.DeprecatedFunctions"/>
+    <rule ref="Generic.Strings.UnnecessaryStringConcat"/>
+
+    <!-- Class constants MUST be declared in all upper case with underscore separators. -->
+    <rule ref="Generic.NamingConventions.UpperCaseConstantName"/>
+
+    <!-- Visibility MUST be declared on all methods. -->
+    <rule ref="Squiz.Scope.MethodScope"/>
+
+    <!-- Class names MUST be declared in StudlyCaps. -->
+    <rule ref="Squiz.Classes.ValidClassName"/>
+
+    <!-- Method arguments with default values MUST go at the end of the argument list. -->
+    <rule ref="PEAR.Functions.ValidDefaultValue"/>
+
+    <!-- <rule ref="Zend">
+        <exclude name="Zend.NamingConventions"/>
+    </rule> -->
+
+    <rule ref="PSR12">
+        <exclude name="Generic.Files.LineLength"/>
+    </rule>
+
+    <!-- <rule ref="Squiz.NamingConventions.ValidVariableName.NotCamelCaps"/> -->
+    <rule ref="Squiz.NamingConventions.ValidVariableName"/>
+    <rule ref="Squiz.NamingConventions.ValidVariableName.PublicHasUnderscore">
+        <severity>0</severity>
+    </rule>
+    <rule ref="Squiz.NamingConventions.ValidVariableName.PrivateNoUnderscore">
+        <severity>0</severity>
+    </rule>
+
+    <!-- Code directory -->
+    <file>app/</file>
+    <file>public/</file>
+    <!-- <file>deploy/</file> -->
+    <file>tests/Unit</file>
+    <!-- <file>tests/integration</file>
+    <file>tests/e2e</file> -->
+    <!-- <exclude-pattern>tests/coverageReports</exclude-pattern> -->
+
+
+</ruleset>
+
+
+<!-- <ruleset name="Custom">
+ <description>Zend, but without linelength check.</description>
+ <rule ref="Zend">
+  <exclude name="Generic.Files.LineLength"/>
+ </rule>
+</ruleset> -->

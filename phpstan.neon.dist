@@ -1,0 +1,10 @@
+parameters:
+	level: 8
+	paths:
+		- app
+		- tests
+	ignoreErrors:
+		-
+			identifier: variable.undefined
+			paths:
+				- app/Lib/Router/

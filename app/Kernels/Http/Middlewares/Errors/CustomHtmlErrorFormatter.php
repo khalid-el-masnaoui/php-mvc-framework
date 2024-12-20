@@ -15,7 +15,7 @@ class CustomHtmlErrorFormatter extends AbstractFormatter
 
     protected function format(Throwable $error, string $contentType): string
     {
-        $code = $error->getCode();
+        $code    = $error->getCode();
         $message = $error->getMessage();
 
         return <<<HTML

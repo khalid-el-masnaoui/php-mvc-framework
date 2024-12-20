@@ -4,8 +4,9 @@ declare(strict_types=1);
 
 namespace App\Core\Attributes\Middlewares;
 
-use App\Core\Enums\HttpMethod;
 use Attribute;
+use App\Core\Enums\HttpMethod;
+use Psr\Http\Server\MiddlewareInterface;
 
 #[Attribute(Attribute::TARGET_METHOD | Attribute::IS_REPEATABLE)]
 class GetMiddleware extends Middleware

@@ -14,6 +14,6 @@ class NotFoundHandler implements RequestHandlerInterface
     /** @return ResponseInterface */
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
-        return new TextResponse("Not Found", 404);
+        return new TextResponse('Not Found', 404);
     }
 }

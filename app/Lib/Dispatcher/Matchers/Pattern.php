@@ -10,13 +10,13 @@ class Pattern implements MatcherInterface
 {
     use NegativeResultTrait;
 
-    private $pattern;
-    private $flags;
+    private string $pattern;
+    private int $flags;
 
-    public function __construct(string $pattern, $flags = 0)
+    public function __construct(string $pattern, int $flags = 0)
     {
         $this->pattern = $this->getValue($pattern);
-        $this->flags = $flags;
+        $this->flags   = $flags;
     }
 
     public function __invoke(ServerRequestInterface $request): bool

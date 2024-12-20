@@ -1,0 +1,92 @@
+name: Lint, Code Quality, Static Code Analysis And Tests
+
+on:
+  push:
+    branches-ignore: main
+  pull_request:
+    branches: main
+  workflow_dispatch:
+
+jobs:
+  Code-Quality:
+    name: Lint, Refactor, Code Quality And Static Code Analysis
+    runs-on: ubuntu-latest
+    env:
+      php-version: 8.1
+      # php-extensions:
+      php-exts-cache-key: cache-php-exts-v1
+
+    steps:
+
+      - name: Checkout Code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Setup PHP-Extensions Cache Environment
+        id: extcache
+        uses: shivammathur/cache-extensions@v1
+        with:
+          php-version: ${{ env.php-version }}
+          # extensions: ${{ env.php-extensions }}
+          key: ${{ env.php-exts-cache-key }}
+
+      - name: PHP-Extensions Cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.extcache.outputs.dir }}
+          key: ${{ steps.extcache.outputs.key }}
+          restore-keys: ${{ steps.extcache.outputs.key }}
+
+      - name: Setup PHP Action With PECL
+        uses: shivammathur/setup-php@2.9.0
+        with:
+          php-version: ${{ env.php-version }}
+          # extensions: ${{ env.php-extensions }}
+        env:
+          fail-fast: true
+
+      - name: Validate composer.json and composer.lock
+        run: composer validate
+
+      - name: Cache Composer packages
+        id: composer-cache
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: ${{ runner.os }}-php-${{ hashFiles('**/composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-php-
+
+      - name: Install Composer dependencies
+        if: steps.composer-cache.outputs.cache-hit != 'true'
+        run: composer install --prefer-dist --no-progress --no-suggest
+
+      - name: PHP-Cs check Run
+        run: composer cs-check
+
+      - name: PHP-Cs-Bf Run
+        run: composer cs-fix
+
+      - name: PHP-Cs-Fixer Cache
+        uses: actions/cache@v4
+        with:
+          path: .php-cs-fixer.cache
+          key: ${{ runner.os }}-phpcsfixer-${{ github.run_id }}
+          restore-keys: ${{ runner.os }}-phpcsfixer-
+
+      - name: PHP-Cs-Fixer Run
+        run: composer cs-fixer
+
+      - name: PHP-Stan Run
+        run: composer phpstan
+
+      # - name: PHP-Rector Cache
+      #   uses: actions/cache@v4
+      #   with:
+      #     path: /tmp/rector
+      #     key: ${{ runner.os }}-rector-${{ github.run_id }}
+      #     restore-keys: ${{ runner.os }}-rector-
+          
+      # - name: PHP-Rector Dry Run
+      #   run: composer rector-dry

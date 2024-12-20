@@ -12,19 +12,20 @@ use Laminas\Diactoros\Response\TextResponse;
 use Laminas\Diactoros\Response\EmptyResponse;
 use App\Core\Exceptions\Routes\RequestHandlerInvalidResponseException;
 
-class BuildResponse
+final class BuildResponse
 {
-    public static function __callStatic($method, $args): ResponseInterface
+    /** @param mixed[] $args */
+    public static function __callStatic(string $method, array $args = []): ResponseInterface
     {
-        $build = new static();
+        $build = new self();
         return $build->$method(...$args) ?? new EmptyResponse();
     }
 
     /** @throws RequestHandlerInvalidResponseException */
-    private function get($response, $found = true): ResponseInterface
+    private function get(mixed $response, bool $found = true): ResponseInterface
     {
         if ($found === false) {
-            return new TextResponse("Not Found", 404);
+            return new TextResponse('Not Found', 404);
         }
 
         if ($response === null) {
@@ -48,6 +49,6 @@ class BuildResponse
 
         //returning collections and entities, models ...
 
-        throw new RequestHandlerInvalidResponseException("Request Handler Invalid Response", code: 500);
+        throw new RequestHandlerInvalidResponseException('Request Handler Invalid Response', code: 500);
     }
 }

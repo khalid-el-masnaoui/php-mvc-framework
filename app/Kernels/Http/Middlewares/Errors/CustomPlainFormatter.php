@@ -15,6 +15,6 @@ class CustomPlainFormatter extends AbstractFormatter
 
     protected function format(Throwable $error, string $contentType): string
     {
-        return sprintf("%s %s\n%s", $error->getCode(), $error->getMessage());
+        return sprintf("%s\n%s", $error->getCode(), $error->getMessage());
     }
 }

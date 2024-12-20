@@ -6,9 +6,9 @@ namespace App\Lib\Dispatcher\Matchers;
 
 trait NegativeResultTrait
 {
-    private $result = true;
+    private bool $result = true;
 
-    private function getValue(string $value)
+    private function getValue(string $value): string
     {
         if ($value[0] === '!') {
             $this->result = false;

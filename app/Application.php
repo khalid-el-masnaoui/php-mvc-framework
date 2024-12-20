@@ -15,7 +15,6 @@ class Application
 
     private EmitterInterface $responseEmitter;
 
-
     public function __construct(
         protected ServerRequestInterface $request
     ) {
@@ -24,7 +23,7 @@ class Application
     public function boot(): static
     {
         Kernel::getRouter();
-        $this->dispatcher = Kernel::getDispatcher();
+        $this->dispatcher      = Kernel::getDispatcher();
         $this->responseEmitter = Kernel::getResponseEmitter();
         return $this;
     }

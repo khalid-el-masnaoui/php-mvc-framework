@@ -10,7 +10,7 @@ class Path implements MatcherInterface
 {
     use NegativeResultTrait;
 
-    private $path;
+    private string $path;
 
     public function __construct(string $path)
     {
@@ -21,6 +21,6 @@ class Path implements MatcherInterface
     {
         $path = $request->getUri()->getPath();
 
-        return (($path === $this->path) || $path === $this->path.'/') === $this->result;
+        return (($path === $this->path) || $path === $this->path . '/') === $this->result;
     }
 }

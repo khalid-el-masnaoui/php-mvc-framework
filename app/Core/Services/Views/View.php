@@ -8,23 +8,25 @@ use App\Core\Exceptions\Views\ViewNotFoundException;
 
 class View
 {
+    /** @param mixed[] $params */
     public function __construct(
         protected string $view,
         protected array $params = []
     ) {
     }
 
-    public static function make(string $view, array $params = []): static
+    /** @param mixed[] $params */
+    public static function make(string $view, array $params = []): self
     {
-        return new static($view, $params);
+        return new self($view, $params);
     }
 
     public function render(): string
     {
-        $viewPath =  __DIR__.'/../../../../resources/views/' . $this->view . '.php';
+        $viewPath =  __DIR__ . '/../../../../resources/views/' . $this->view . '.php';
 
-        if (! file_exists($viewPath)) {
-            throw new ViewNotFoundException();
+        if (!file_exists($viewPath)) {
+            throw new ViewNotFoundException('ViewNotFoundException', 404);
         }
 
         foreach ($this->params as $key => $value) {
@@ -43,7 +45,7 @@ class View
         return $this->render();
     }
 
-    public function __get(string $name)
+    public function __get(string $name): mixed
     {
         return $this->params[$name] ?? null;
     }

@@ -8,5 +8,4 @@ use Psr\Container\NotFoundExceptionInterface;
 
 class ViewNotFoundException extends \Exception implements NotFoundExceptionInterface
 {
-    protected $message = 'View not found';
 }

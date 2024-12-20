@@ -1,6 +1,5 @@
 <?php
 
-
 declare(strict_types=1);
 
 namespace App\Kernels\Http\Middlewares;
@@ -16,8 +15,7 @@ class SetAttributesMiddleware implements MiddlewareInterface
         ServerRequestInterface $request,
         RequestHandlerInterface $handler
     ): ResponseInterface {
-
-        $request = $request->withAttribute("attr", "value");
+        $request = $request->withAttribute('attr', 'value');
 
         return $handler->handle($request);
     }

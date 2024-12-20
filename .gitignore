@@ -1,4 +1,12 @@
 vendor
-routes
 storage/*
+phpunit.xml
+phpstan.neon
+rector.php
+.phpcs.xml
+.php-cs-fixer.php
+.phpunit.cache
+.php-cs-fixer.cache
+.deptrac.cache
+.vscode
 .env
