@@ -2,23 +2,19 @@
 
 declare(strict_types=1);
 
-namespace Lib;
+namespace App\Lib\Router;
 
 use App\Core\Enums\HttpMethod;
-use Lib\Container;
+use App\Lib\Utils\BuildResponse;
 use App\Core\Attributes\Routes\Route;
 use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Server\MiddlewareInterface;
-use Laminas\Diactoros\Response\HtmlResponse;
-use Laminas\Diactoros\Response\JsonResponse;
-use Laminas\Diactoros\Response\TextResponse;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
-use App\Kernels\Http\Handlers\NotFoundHandler;
 use App\Core\Attributes\Middlewares\Middleware;
-use App\Kernels\Http\Handlers\MethodNotAllowedHandler;
-use App\Core\Exceptions\Routes\RequestHttpMethodUnSupported;
+use App\Core\Exceptions\Routes\RequestHttpMethodUnSupportedException;
+use App\Core\Exceptions\Routes\RequestHandlerInvalidResponseException;
 
 /**
  * Router Implementation for handling request routing
@@ -27,18 +23,20 @@ use App\Core\Exceptions\Routes\RequestHttpMethodUnSupported;
  */
 class Router implements RequestHandlerInterface
 {
-    protected string $currentGroupPrefix = '';
-
     /** @var array<string,array<string,array<callable|object>>> $routes */
     protected array $routes;
 
-    /** @var array<string,array<string,MiddlewareInterface[]>> $routeMiddlewares */
-    protected array $routeMiddlewares;
+    /** @var array<string,array<string,MiddlewareInterface[]>> $middlewares */
+    protected array $middlewares;
 
     /** @var (int|string)[] $routeParameters */
     protected array $routeParameters = [];
 
+    protected string $currentGroupPrefix = '';
+
     protected array $currentGroupMiddlewares = [];
+
+    protected string $defaultNamespace = '';
 
     public function __construct(private ContainerInterface $container)
     {
@@ -49,9 +47,19 @@ class Router implements RequestHandlerInterface
         return $this->routes;
     }
 
-    public function getRouteMiddlewares(): array
+    public function getMiddlewares(): array
     {
-        return $this->routeMiddlewares;
+        return $this->middlewares;
+    }
+
+    public function getDefaultNamespace(): string
+    {
+        return $this->defaultNamespace;
+    }
+
+    public function setDefaultNamespace(string $namespace): void
+    {
+        $this->defaultNamespace = str_ends_with($namespace, "\\") ? $namespace : "{$namespace}\\";
     }
 
     public function registerRoutesFromControllerAttributes(array $controllers)
@@ -88,23 +96,47 @@ class Router implements RequestHandlerInterface
         }
     }
 
-    /**
-     * @param MiddlewareInterface[] $middlewares
-     * @throws RequestHttpMethodUnSupported
-    */
+    public function loadFrom(string $filename): void
+    {
+        if (file_exists($filename)) {
+            require_once $filename;
+
+            $currentRoutes = $this->getRoutes();
+            $loadedRoutes = $router->getRoutes();
+
+            $currentMiddlewares = $this->getMiddlewares();
+            $loadedMiddlewares = $router->getMiddlewares();
+
+            $newRoutes = [];
+            $newMiddlewares = [];
+            foreach (HttpMethod::values() as $method) {
+                $newRoutes[$method]  = array_merge($loadedRoutes[$method] ?? [], $currentRoutes[$method] ?? []);
+
+                $paths = array_merge(array_keys($currentMiddlewares[$method] ?? []), array_keys($loadedMiddlewares[$method] ?? []));
+
+                foreach ($paths as $path) {
+                    $newMiddlewares[$method][$path]  = array_unique(array_merge($currentMiddlewares[$method][$path] ?? [], $loadedMiddlewares[$method][$path] ?? []), SORT_REGULAR);
+                }
+            }
+
+            $this->routes = $newRoutes;
+            $this->middlewares = $newMiddlewares;
+        }
+    }
+
+    /** @param MiddlewareInterface[] $middlewares */
     public function addRoute(string $method, string $route, callable|array $handler, array $middlewares = []): void
     {
         $method = $this->parseMethod($method);
-        if (!in_array($method, HttpMethod::values())) {
-            throw new RequestHttpMethodUnSupported();
-        }
 
         $route                         = $this->currentGroupPrefix . $route;
         $route                         = $this->parseRoute($route);
+
+        $handler[0] = $this->defaultNamespace . ltrim($handler[0], "\\");
         $this->routes[$method][$route] = $handler;
 
         $middlewares = $middlewares === [] ? $this->currentGroupMiddlewares : $middlewares;
-        $this->routeMiddlewares[$method][$route] = $middlewares;
+        $this->middlewares[$method][$route] = $middlewares;
 
     }
 
@@ -143,13 +175,10 @@ class Router implements RequestHandlerInterface
     public function addMiddlewares(string $method, string $route, array $middlewares): void
     {
         $method = $this->parseMethod($method);
-        if (!in_array($method, HttpMethod::values())) {
-            throw new RequestHttpMethodUnSupported();
-        }
 
         $route                         = $this->currentGroupPrefix . $route;
         $route                         = $this->parseRoute($route);
-        $this->routeMiddlewares[$method][$route] = array_merge($this->routeMiddlewares[$method][$route] ?? [], $middlewares);
+        $this->middlewares[$method][$route] = array_merge($this->middlewares[$method][$route] ?? [], $middlewares);
     }
 
     protected function parseRoute(string $route): string
@@ -158,42 +187,46 @@ class Router implements RequestHandlerInterface
         return str_starts_with($route, '/') ? $route : "/{$route}";
     }
 
+    /** @throws RequestHttpMethodUnSupportedException */
     protected function parseMethod(string $method): string
     {
-        return strtoupper(trim($method));
+        $parsedMethod =  strtoupper(trim($method));
+        if (!in_array($parsedMethod, HttpMethod::values())) {
+            throw new RequestHttpMethodUnSupportedException("Http Method Not Allowed", 405);
+        }
+
+        return $parsedMethod;
     }
 
+    /** @throws RequestHttpMethodUnSupportedException|RequestHandlerInvalidResponseException */
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
         // dd($this->routes);
-        // dd($this->routeMiddlewares);
+        // dd($this->middlewares);
         // dd($request->getAttributes());
 
         $path       = $this->parseRoute($request->getUri()->getPath());
         $method     = $this->parseMethod($request->getMethod());
 
-        // Check if the method exists in routes
-        if (!isset($this->routes[$method])) {
-            return (new MethodNotAllowedHandler())->handle($request);
-        }
-
         // Try to match the route using exact matching
         $handler = $this->routes[$method][$path] ?? [];
 
-        if ($handler !== []) {
-            return $this->dispatch($request, $handler, []);
-        }
+        return $this->dispatch($handler, [$request]);
 
-        return  (new NotFoundHandler())->handle($request);
     }
 
-    protected function dispatch(ServerRequestInterface $request, callable|array $handler, $args = []): ResponseInterface
+    protected function dispatch(callable|array $handler, $args = []): ResponseInterface
     {
-        array_unshift($args, $request);
+        $found = true;
 
         $controllerResponse = "";
         if (is_callable($handler)) {
             $controllerResponse = call_user_func($handler, $args);
+        }
+
+        if (empty($handler)) {
+            $found = false;
+            $handler = ["", ""];
         }
 
         [$class, $method] = $handler;
@@ -206,38 +239,7 @@ class Router implements RequestHandlerInterface
             }
         }
 
-        return $this->constructResponse($controllerResponse) ?? (new NotFoundHandler())->handle($request);
-    }
 
-    private function constructResponse(mixed $controllerResponse): ?ResponseInterface
-    {
-        if ($controllerResponse instanceof ResponseInterface) {
-            return $controllerResponse;
-        }
-
-        if ($this->isHTML($controllerResponse)) {
-            return new HtmlResponse($controllerResponse);
-        }
-
-        if (is_string($controllerResponse)) {
-            return new TextResponse($controllerResponse);
-        }
-
-        if (is_array($controllerResponse)) {
-            return new JsonResponse($controllerResponse);
-        }
-
-        //returning collections and entities, models ...
-
-        return null;
-    }
-
-    private function isHTML($text): bool
-    {
-        $processed = htmlentities($text);
-        if ($processed === $text) {
-            return false;
-        }
-        return true;
+        return BuildResponse::get($controllerResponse, $found);
     }
 }

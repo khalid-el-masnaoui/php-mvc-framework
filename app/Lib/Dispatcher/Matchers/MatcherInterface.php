@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Lib\Dispatcher\Matchers;
+namespace App\Lib\Dispatcher\Matchers;
 
 use Psr\Http\Message\ServerRequestInterface;
 

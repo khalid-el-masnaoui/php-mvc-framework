@@ -19,61 +19,22 @@ RUN groupmod -g $GID www-data
 # Install PHP extensions deps
 RUN apt-get update \
     && apt-get install -y \
-    #     libmcrypt-dev \
-    #     zlib1g-dev \
         libicu-dev \
-    #     g++ \
-    #     unixodbc-dev \
-    #     libxml2-dev \
-    #     libaio-dev \
-    #     libmemcached-dev \
-    #     freetds-dev \
-    #     libonig-dev \
-    #     libfreetype-dev \
-	# 	libjpeg62-turbo-dev \
-	# 	libpng-dev \
-	# libssl-dev \
-	# libzip-dev \
-	# openssl \
-	curl \
-    # wget \
+	    curl \
         vim \
         git \
         zip \
         unzip
 
 # Install PHP extensions
-#  RUN pecl install redis \
-    # && pecl install memcached \
-    # && pecl install mcrypt \
 RUN  docker-php-ext-configure intl \
     && docker-php-ext-install \
-            # iconv \
-            # mbstring \
             intl \
-            # gd \
             mysqli \
             pdo_mysql \
-            # sockets \
-            # zip \
-            # pcntl \
-            # ftp \
-            # bcmath \
-            # gettext \
     && docker-php-ext-enable \
-            # mcrypt \
-            # redis \
-            # memcached \
             opcache
 
-
-# Install Composer
-#traditional
-#RUN install -d -m 0755 -o www-data -g www-data /.composer
-#RUN curl -sS https://getcomposer.org/installer | php -- \
-#        --install-dir=/usr/local/bin \
-#        --filename=composer
-#RUN chown -R www-data:www-data /.composer
 
 #using multistage 
 RUN install -d -m 0755 -o www-data -g www-data ~/.composer
@@ -83,11 +44,6 @@ RUN chown -R www-data:www-data ~/.composer
 #add apcu
 RUN pecl install apcu \
   && docker-php-ext-enable apcu
-
-# Install PHPUnit Globaly
-# RUN wget https://phar.phpunit.de/phpunit.phar -O /usr/local/bin/phpunit \
-#     && chmod +x /usr/local/bin/phpunit
-
 
 EXPOSE 9000
 
@@ -101,7 +57,7 @@ COPY ./configurations/php/php/php.ini  /usr/local/etc/php/
 COPY ./configurations/php/php/mods-available/opcache.ini  /usr/local/etc/php/conf.d/
 
 #disable the default opcache.ini
-RUN mv /usr/local/etc/php/conf.d/docker-php-ext-opcache.ini /usr/local/etc/php/conf.d/odocker-php-ext-pcache.ini.disabled
+RUN mv /usr/local/etc/php/conf.d/docker-php-ext-opcache.ini /usr/local/etc/php/conf.d/docker-php-ext-opcache.ini.disabled
 
 # Default sessions directory
 RUN install -d -m 0755 -o www-data -g www-data /var/lib/php/sessions

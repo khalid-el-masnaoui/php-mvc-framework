@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-use App\App;
+use App\Application;
 use Laminas\Diactoros\ServerRequestFactory;
 
 $request = ServerRequestFactory::fromGlobals();
 
-return (new App(
+return (new Application(
     $request
 ))->boot();

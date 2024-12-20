@@ -22,7 +22,7 @@ use App\Kernels\Http\Middlewares\SetAttributesMiddleware;
 
 class HomeController
 {
-    #[Get('/')]
+    // #[Get('/')]
     #[GetMiddleware('/', [new SetAttributesMiddleware()])]
     public function index()
     {

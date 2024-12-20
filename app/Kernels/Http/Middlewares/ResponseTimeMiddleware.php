@@ -13,9 +13,6 @@ class ResponseTimeMiddleware implements MiddlewareInterface
 {
     public const HEADER = 'X-Response-Time';
 
-    /**
-     * Process a server request and return a response.
-     */
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
         $server = $request->getServerParams();

@@ -6,7 +6,6 @@ namespace App\Core\Attributes\Middlewares;
 
 use Attribute;
 use App\Core\Enums\HttpMethod;
-use Psr\Http\Server\MiddlewareInterface;
 
 #[Attribute(Attribute::TARGET_METHOD | Attribute::IS_REPEATABLE)]
 class DeleteMiddleware extends Middleware

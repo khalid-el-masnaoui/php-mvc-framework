@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Core\Attributes\Routes;
 
-use App\Contracts\RouteInterface;
 use App\Core\Enums\HttpMethod;
 use Attribute;
 

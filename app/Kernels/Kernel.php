@@ -6,25 +6,25 @@ declare(strict_types=1);
 namespace App\Kernels;
 
 use App\Config;
-use Lib\Router;
 use Dotenv\Dotenv;
 use Middlewares\Whoops;
 use Middlewares\Minifier;
 use Middlewares\Shutdown;
-use Lib\Container\Container;
+use App\Lib\Router\Router;
 use Middlewares\ContentType;
 use Middlewares\GzipEncoder;
 use Middlewares\ErrorHandler;
+use App\Lib\Container\Container;
 use Middlewares\ContentEncoding;
 use App\Core\Services\Views\View;
+use App\Lib\Dispatcher\Dispatcher;
 use Psr\Container\ContainerInterface;
-use Middlewares\ErrorFormatter\HtmlFormatter;
-use Middlewares\ErrorFormatter\JsonFormatter;
 use Laminas\HttpHandlerRunner\Emitter\SapiEmitter;
-use App\Kernels\Http\Middlewares\Dispatcher\Dispatcher;
 use Laminas\HttpHandlerRunner\Emitter\EmitterInterface;
 use App\Kernels\Http\Middlewares\ResponseTimeMiddleware;
+use App\Kernels\Http\Middlewares\Errors\CustomHtmlErrorFormatter;
 use App\Kernels\Http\Middlewares\Errors\CustomJsonErrorFormatter;
+use App\Kernels\Http\Middlewares\Errors\CustomPlainFormatter;
 
 class Kernel
 {
@@ -54,14 +54,13 @@ class Kernel
         return self::$container;
     }
 
-
     public static function getConfig(): Config
     {
         if (self::$config !== null) {
             return self::$config;
         }
 
-        $dotenv = Dotenv::createImmutable(dirname(__DIR__."/../../../"));
+        $dotenv = Dotenv::createImmutable(__DIR__."/../../");
         $dotenv->load();
 
         self::$config = new Config($_ENV);
@@ -76,13 +75,40 @@ class Kernel
         }
 
         self::$router = Kernel::getContainer()->get(Router::class);
-        Kernel::registerRoutesAndMiddlewares();
+
+        //load and register routes and their middlewares (from file and attributes)
+        Kernel::registerRoutesAndMiddlewaresFromAttributes();
+        self::$router->loadFrom(__DIR__."/../../routes/http.php");
+
 
         return self::$router;
     }
 
-    private static function registerRoutesAndMiddlewares(): void
+    public static function getDispatcher(): Dispatcher
     {
+        if (self::$dispatcher !== null) {
+            return self::$dispatcher;
+        }
+
+        self::$dispatcher = new Dispatcher(Kernel::getMiddlewares(), Kernel::getRouter());
+
+        return self::$dispatcher;
+    }
+
+    public static function getResponseEmitter(): EmitterInterface
+    {
+        if (self::$responseEmitter !== null) {
+            return self::$responseEmitter;
+        }
+
+        self::$responseEmitter = new SapiEmitter();
+
+        return self::$responseEmitter;
+    }
+
+    private static function registerRoutesAndMiddlewaresFromAttributes(): void
+    {
+        #TODO
         $controllers = [
             'App\Kernels\Http\Controllers\HomeController'
         ];
@@ -101,7 +127,7 @@ class Kernel
     {
         $middlewares = [];
 
-        $routeMiddlewares = Kernel::getRouter()->getRouteMiddlewares();
+        $routeMiddlewares = Kernel::getRouter()->getMiddlewares();
         array_walk($routeMiddlewares, function ($routes, $httpMethod) use (&$middlewares): void {
 
             $httpMethod = strtolower($httpMethod);
@@ -119,39 +145,22 @@ class Kernel
             });
         });
 
-        //global Middlewares
+        return [...Kernel::getGlobalMiddlewares(), ...$middlewares];
+    }
+
+    private static function getGlobalMiddlewares(): array
+    {
         $errorHandler =  [Kernel::getConfig()->environment["debug"] === false , new ErrorHandler([
             new CustomJsonErrorFormatter(),
-            new JsonFormatter(),
-            new HtmlFormatter(),
+            new CustomHtmlErrorFormatter(),
+            new CustomPlainFormatter(),
+            new CustomPlainFormatter(),
         ])];
 
         $whoopsErrorHandler = [Kernel::getConfig()->environment["debug"] === true  ,new Whoops()];
 
         $maintenanceMiddleware = [Kernel::getConfig()->environment["maintenance"] === true, (new Shutdown())->retryAfter(60 * 5)->render(fn () => View::make('maintenance'))];
 
-        return [$errorHandler, $whoopsErrorHandler, $maintenanceMiddleware, new GzipEncoder(), Minifier::html(),  Minifier::css(),  Minifier::js(), new ContentType(), new ContentEncoding(), ...$middlewares, new ResponseTimeMiddleware()];
-    }
-
-    public static function getDispatcher(): Dispatcher
-    {
-        if (self::$dispatcher !== null) {
-            return self::$dispatcher;
-        }
-
-        self::$dispatcher = new Dispatcher(Kernel::getMiddlewares(), Kernel::$router);
-
-        return self::$dispatcher;
-    }
-
-    public static function getResponseEmitter(): EmitterInterface
-    {
-        if (self::$responseEmitter !== null) {
-            return self::$responseEmitter;
-        }
-
-        self::$responseEmitter = new SapiEmitter();
-
-        return self::$responseEmitter;
+        return [$errorHandler, $whoopsErrorHandler, $maintenanceMiddleware, new ResponseTimeMiddleware(), new GzipEncoder(), Minifier::html(),  Minifier::css(),  Minifier::js(), new ContentType(), new ContentEncoding()];
     }
 }

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Lib\Dispatcher;
+namespace App\Lib\Dispatcher;
 
 use App\Kernels\Http\Handlers\NotFoundHandler;
 use Closure;
@@ -12,7 +12,7 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
-use App\Kernels\Http\Middlewares\Dispatcher\Matchers\Path;
+use App\Lib\Dispatcher\Matchers\Path;
 
 class Dispatcher implements MiddlewareInterface, RequestHandlerInterface
 {

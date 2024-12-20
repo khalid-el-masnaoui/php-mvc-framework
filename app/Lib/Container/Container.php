@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Lib\Container;
+namespace App\Lib\Container;
 
 use App\Core\Exceptions\Services\ContainerException;
 use App\Core\Exceptions\Services\NotFoundException;
@@ -39,7 +39,7 @@ class Container implements ContainerInterface
 
     public function resolve(string $id)
     {
-        // 1. Inspect the class that we are trying to get from the container
+        // Inspect the class that we are trying to get from the container
         try {
             $reflectionClass = new \ReflectionClass($id);
         } catch (\ReflectionException $e) {
@@ -50,21 +50,21 @@ class Container implements ContainerInterface
             throw new ContainerException('Class "' . $id . '" is not instantiable');
         }
 
-        // 2. Inspect the constructor of the class
+        // Inspect the constructor of the class
         $constructor = $reflectionClass->getConstructor();
 
         if (! $constructor) {
             return new $id();
         }
 
-        // 3. Inspect the constructor parameters (dependencies)
+        //Inspect the constructor parameters (dependencies)
         $parameters = $constructor->getParameters();
 
         if (! $parameters) {
             return new $id();
         }
 
-        // 4. If the constructor parameter is a class then try to resolve that class using the container
+        //If the constructor parameter is a class then try to resolve that class using the container
         $dependencies = array_map(
             function (\ReflectionParameter $param) use ($id) {
                 $name = $param->getName();

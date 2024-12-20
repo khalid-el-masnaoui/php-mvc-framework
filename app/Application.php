@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace App;
 
 use App\Kernels\Kernel;
+use App\Lib\Dispatcher\Dispatcher;
 use Psr\Http\Message\ServerRequestInterface;
-use App\Kernels\Http\Middlewares\Dispatcher\Dispatcher;
 use Laminas\HttpHandlerRunner\Emitter\EmitterInterface;
 
-class App
+class Application
 {
     private Dispatcher $dispatcher;
 
@@ -31,7 +31,6 @@ class App
 
     public function run(): void
     {
-        $response = $this->dispatcher->dispatch($this->request);
-        $this->responseEmitter->emit($response);
+        $this->responseEmitter->emit($this->dispatcher->dispatch($this->request));
     }
 }

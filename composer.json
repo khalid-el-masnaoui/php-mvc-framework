@@ -21,8 +21,7 @@
             "App\\": [
                 "app/",
                 "config/"
-            ],
-            "Lib\\": "lib/"
+            ]
         }
     },
     "autoload-dev": {

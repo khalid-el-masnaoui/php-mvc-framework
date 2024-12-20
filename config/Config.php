@@ -21,9 +21,8 @@ class Config
                 'password'  => $env['DB_PASS'],
                 'database'  => $env['DB_DATABASE'],
                 'driver'    => $env['DB_DRIVER'] ?? 'pdo_mysql',
-                'charset'   => 'utf8',
-                'collation' => 'utf8_unicode_ci',
-                'prefix'    => '',
+                'charset'   => 'utf8mb4',
+                'collation' => 'utf8mb4_0900_ai_ci'
             ],
             'environment' => [
                 "debug" => $env["APP_DEBUG"] == "true" ? true : false,
