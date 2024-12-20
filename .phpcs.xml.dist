@@ -57,11 +57,7 @@
 
     <!-- Code directory -->
     <file>app/</file>
-    <file>public/</file>
-    <!-- <file>deploy/</file> -->
-    <file>tests/Unit</file>
-    <!-- <file>tests/integration</file>
-    <file>tests/e2e</file> -->
+    <!--  <file>tests/Unit</file> -->
     <!-- <exclude-pattern>tests/coverageReports</exclude-pattern> -->
 
 
