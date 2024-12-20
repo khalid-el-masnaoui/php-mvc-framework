@@ -57,7 +57,7 @@
 
     <!-- Code directory -->
     <file>app/</file>
-    <!--  <file>tests/Unit</file> -->
+    <file>tests/Unit</file>
     <!-- <exclude-pattern>tests/coverageReports</exclude-pattern> -->
 
 
