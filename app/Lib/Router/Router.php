@@ -124,7 +124,7 @@ class Router implements RequestHandlerInterface
                 }
             }
 
-            $this->routes      = $newRoutes;
+            $this->routes      = $newRoutes; // @phpstan-ignore assign.propertyType
             $this->middlewares = $newMiddlewares; // @phpstan-ignore assign.propertyType
         }
     }
