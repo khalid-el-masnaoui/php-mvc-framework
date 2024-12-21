@@ -23,7 +23,7 @@ use Psr\Http\Message\ResponseInterface;
 class HomeController
 {
     // #[Get('/')]
-    #[GetMiddleware('/', [new SetAttributesMiddleware()])]
+    #[GetMiddleware('/', [SetAttributesMiddleware::class])]
     public function index(): ResponseInterface
     {
         // throw new \Exception("Error Processing Request", 501);
@@ -35,7 +35,7 @@ class HomeController
     }
 
     #[Post('/store')]
-    #[PostMiddleware('/store', [new JsonPayload()])]
+    #[PostMiddleware('/store', [JsonPayload::class])]
     public function store(ServerRequestInterface $request): ResponseInterface
     {
         // throw new \Exception("Error Processing Request", 501);
@@ -43,7 +43,7 @@ class HomeController
     }
 
     #[Put('/update')]
-    #[PutMiddleware('/update', [new UrlEncodePayload()])]
+    #[PutMiddleware('/update', [UrlEncodePayload::class])]
     public function update(ServerRequestInterface $request): ResponseInterface
     {
         return new JsonResponse($request->getParsedBody(), 200, ['special-header' => 'special-header-value']);

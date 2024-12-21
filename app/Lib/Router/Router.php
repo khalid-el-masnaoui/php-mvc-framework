@@ -9,7 +9,6 @@ use App\Lib\Utils\BuildResponse;
 use App\Core\Attributes\Routes\Route;
 use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ResponseInterface;
-use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use App\Core\Attributes\Middlewares\Middleware;
@@ -24,17 +23,17 @@ use App\Core\Exceptions\Routes\RequestHandlerInvalidResponseException;
 class Router implements RequestHandlerInterface
 {
     /** @var array<string,array<string,array<callable|object>>> $routes */
-    protected array $routes;
+    protected array $routes = [];
 
-    /** @var array<string,array<string,MiddlewareInterface[]>> $middlewares */
-    protected array $middlewares;
+    /** @var array<string,array<string,class-string[]>> $middlewares */
+    protected array $middlewares = [];
 
     /** @var (int|string)[] $routeParameters */
     protected array $routeParameters = [];
 
     protected string $currentGroupPrefix = '';
 
-    /** @var MiddlewareInterface[]> $currentGroupMiddlewares */
+    /** @var class-string[]> $currentGroupMiddlewares */
     protected array $currentGroupMiddlewares = [];
 
     protected string $defaultNamespace = '';
@@ -49,7 +48,7 @@ class Router implements RequestHandlerInterface
         return $this->routes;
     }
 
-    /** @return array<string,array<string,MiddlewareInterface[]>>  */
+    /** @return array<string,array<string,class-string[]>>  */
     public function getMiddlewares(): array
     {
         return $this->middlewares;
@@ -132,7 +131,7 @@ class Router implements RequestHandlerInterface
 
     /**
      * @param string[] $handler
-     * @param MiddlewareInterface[] $middlewares
+     * @param class-string[] $middlewares
     */
     public function addRoute(string $method, string $route, callable|array $handler, array $middlewares = []): void
     {
@@ -148,7 +147,7 @@ class Router implements RequestHandlerInterface
         $this->middlewares[$method][$route] = $middlewares;
     }
 
-    /** @param MiddlewareInterface[] $middlewares */
+    /** @param class-string[] $middlewares */
     public function addGroup(string $prefix, callable $callback, array $middlewares = []): void
     {
         $previousGroupPrefix           = $this->currentGroupPrefix;
@@ -161,7 +160,7 @@ class Router implements RequestHandlerInterface
 
     /**
      * @param string[] $handler
-     * @param MiddlewareInterface[] $middlewares
+     * @param class-string[] $middlewares
     */
     public function get(string $route, callable|array $handler, array $middlewares = []): void
     {
@@ -170,7 +169,7 @@ class Router implements RequestHandlerInterface
 
     /**
      * @param string[] $handler
-     * @param MiddlewareInterface[] $middlewares
+     * @param class-string[] $middlewares
     */
     public function post(string $route, callable|array $handler, array $middlewares = []): void
     {
@@ -179,7 +178,7 @@ class Router implements RequestHandlerInterface
 
     /**
      * @param string[] $handler
-     * @param MiddlewareInterface[] $middlewares
+     * @param class-string[] $middlewares
     */
     public function put(string $route, callable|array $handler, array $middlewares = []): void
     {
@@ -188,14 +187,14 @@ class Router implements RequestHandlerInterface
 
     /**
      * @param string[] $handler
-     * @param MiddlewareInterface[] $middlewares
+     * @param class-string[] $middlewares
     */
     public function delete(string $route, callable|array $handler, array $middlewares = []): void
     {
         $this->addRoute('DELETE', $route, $handler, $middlewares);
     }
 
-    /** @param MiddlewareInterface[] $middlewares */
+    /** @param class-string[] $middlewares */
     public function addMiddlewares(string $method, string $route, array $middlewares): void
     {
         $method = $this->parseMethod($method);
@@ -225,14 +224,9 @@ class Router implements RequestHandlerInterface
     /** @throws RequestHttpMethodUnSupportedException|RequestHandlerInvalidResponseException */
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
-        // dd($this->routes);
-        // dd($this->middlewares);
-        // dd($request->getAttributes());
-
         $path       = $this->parseRoute($request->getUri()->getPath());
         $method     = $this->parseMethod($request->getMethod());
 
-        // Try to match the route using exact matching
         $handler = $this->routes[$method][$path] ?? [];
 
         return $this->dispatch($handler, [$request]); // @phpstan-ignore argument.type

@@ -136,7 +136,9 @@ class Kernel
                 $middlewareConditions = [fn ($request): bool => strtolower($request->getMethod()) === $httpMethod, $route];
 
                 foreach ($registeredMiddlewares as $middleware) {
-                    $middlewares[] = [...$middlewareConditions, $middleware];
+                    /** @var MiddlewareInterface */
+                    $middleware          = new $middleware();
+                    $middlewares[]       = [...$middlewareConditions, $middleware];
                 }
             });
         });
