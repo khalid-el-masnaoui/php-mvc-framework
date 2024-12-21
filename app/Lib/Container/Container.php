@@ -13,7 +13,7 @@ class Container implements ContainerInterface
     /** @var mixed[] */
     private array $entries = [];
 
-    public function get(string $id)
+    public function get(string $id): mixed
     {
         if ($this->has($id)) {
             $entry = $this->entries[$id];
@@ -22,6 +22,7 @@ class Container implements ContainerInterface
                 return $entry($this);
             }
 
+            /** @var string */
             $id = $entry;
         }
 

@@ -20,9 +20,17 @@ class Application
     ) {
     }
 
+    public function withRouting(string $routesFile = ''): static
+    {
+        if (file_exists($routesFile)) {
+            Kernel::getRouter($routesFile);
+        }
+
+        return $this;
+    }
+
     public function boot(): static
     {
-        Kernel::getRouter();
         $this->dispatcher      = Kernel::getDispatcher();
         $this->responseEmitter = Kernel::getResponseEmitter();
         return $this;

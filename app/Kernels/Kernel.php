@@ -68,7 +68,7 @@ class Kernel
         return self::$config;
     }
 
-    public static function getRouter(): Router
+    public static function getRouter(string $routesFile = ''): Router
     {
         if (self::$router !== null) {
             return self::$router;
@@ -78,7 +78,7 @@ class Kernel
 
         //load and register routes and their middlewares (from file and attributes)
         Kernel::registerRoutesAndMiddlewaresFromAttributes();
-        self::$router->loadFrom(__DIR__ . '/../../routes/http.php');
+        self::$router->loadFrom($routesFile);
 
         return self::$router;
     }
@@ -136,7 +136,9 @@ class Kernel
                 $middlewareConditions = [fn ($request): bool => strtolower($request->getMethod()) === $httpMethod, $route];
 
                 foreach ($registeredMiddlewares as $middleware) {
-                    $middlewares[] = [...$middlewareConditions, $middleware];
+                    /** @var MiddlewareInterface */
+                    $middleware          = new $middleware();
+                    $middlewares[]       = [...$middlewareConditions, $middleware];
                 }
             });
         });
