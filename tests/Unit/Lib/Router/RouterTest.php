@@ -34,8 +34,8 @@ final class RouterTest extends TestCase
         /** @suppress  PHP0406 */
 
         /** @var ContainerInterface */
-        $ContainerInterface                     = Mockery::mock(ContainerInterface::class);
-        $this->router                           = new Router($ContainerInterface);
+        $containerInterface                     = Mockery::mock(ContainerInterface::class);
+        $this->router                           = new Router($containerInterface);
     }
 
     protected function tearDown(): void
