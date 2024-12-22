@@ -1,6 +1,6 @@
 <?php
 
-use function App\Lib\Utils\Functions\env;
+use function env;
 
 return [
 

@@ -8,3 +8,12 @@ parameters:
 			identifier: variable.undefined
 			paths:
 				- app/Lib/Router/
+		-
+			identifier: staticClassAccess.privateProperty
+			paths:
+				- app/Lib/Application/Container/AppContainer.php
+				- app/Kernels//Kernel.php
+		-
+			identifier: new.static
+			paths:
+				- app/Kernels//Kernel.php

@@ -7,6 +7,7 @@ namespace App\Kernels;
 use Closure;
 use Dotenv\Dotenv;
 use Noodlehaus\Config;
+use App\Lib\Views\View;
 use Middlewares\Whoops;
 use Middlewares\Minifier;
 use Middlewares\Shutdown;
@@ -14,18 +15,18 @@ use App\Lib\Router\Router;
 use Middlewares\ContentType;
 use Middlewares\GzipEncoder;
 use Middlewares\ErrorHandler;
-use App\Lib\Container\Container;
+use App\Lib\DiContainer\Container;
 use Middlewares\ContentEncoding;
-use App\Core\Services\Views\View;
-use App\Lib\Dispatcher\Dispatcher;
 use Psr\Container\ContainerInterface;
+use App\Lib\Psr15\Dispatcher\Dispatcher;
 use Psr\Http\Server\MiddlewareInterface;
+use Laminas\Diactoros\ServerRequestFactory;
 use Laminas\HttpHandlerRunner\Emitter\SapiEmitter;
+use App\Lib\Psr15\Middlewares\ResponseTimeMiddleware;
 use Laminas\HttpHandlerRunner\Emitter\EmitterInterface;
-use App\Kernels\Http\Middlewares\ResponseTimeMiddleware;
-use App\Kernels\Http\Middlewares\Errors\CustomPlainFormatter;
-use App\Kernels\Http\Middlewares\Errors\CustomHtmlErrorFormatter;
-use App\Kernels\Http\Middlewares\Errors\CustomJsonErrorFormatter;
+use App\Lib\Psr15\Middlewares\Errors\CustomPlainFormatter;
+use App\Lib\Psr15\Middlewares\Errors\CustomHtmlErrorFormatter;
+use App\Lib\Psr15\Middlewares\Errors\CustomJsonErrorFormatter;
 
 class Kernel
 {
@@ -38,6 +39,33 @@ class Kernel
     private static ?Dispatcher $dispatcher = null;
 
     private static ?EmitterInterface $responseEmitter = null;
+
+    private static ?self $instance = null;
+
+    public static function singleton(): Kernel
+    {
+        if (static::$instance === null) {
+            static::$instance = new static();
+        }
+        return static::$instance;
+    }
+
+    public function boot(string $routesFile = ''): static
+    {
+        $this->getContainer();
+        $this->getConfig();
+        $this->getRouter($routesFile);
+        $this->getDispatcher();
+        $this->getResponseEmitter();
+
+        return $this;
+    }
+
+    public function dispatch(): void
+    {
+        $request         = ServerRequestFactory::fromGlobals();
+        $this->getResponseEmitter()->emit($this->getDispatcher()->dispatch($request));
+    }
 
     public static function getContainer(): ContainerInterface
     {
@@ -80,6 +108,8 @@ class Kernel
         Kernel::registerRoutesAndMiddlewaresFromAttributes();
         self::$router->loadFrom($routesFile);
 
+        // dd(Kernel::getRouter()->getRoutes());
+
         return self::$router;
     }
 
@@ -108,14 +138,11 @@ class Kernel
     private static function registerRoutesAndMiddlewaresFromAttributes(): void
     {
         $controllers = [
-            'App\Kernels\Http\Controllers\HomeController'
+            'App\Kernels\Http\Controllers\HomeController',
+            'App\Kernels\Http\Controllers\ProductController'
         ];
 
-        Kernel::getRouter()->registerRoutesFromControllerAttributes(
-            $controllers
-        );
-
-        Kernel::getRouter()->registerMiddlewaresFromControllerAttributes(
+        Kernel::getRouter()->registerRoutesAndMiddlewaresFromControllerAttributes(
             $controllers
         );
     }
@@ -125,10 +152,11 @@ class Kernel
     {
         $middlewares = [];
 
-        $routeMiddlewares = Kernel::getRouter()->getMiddlewares();
+        $routeMiddlewares = Kernel::getRouter()->getRoutes();
         array_walk($routeMiddlewares, function ($routes, $httpMethod) use (&$middlewares): void {
             $httpMethod = strtolower($httpMethod);
             array_walk($routes, function ($registeredMiddlewares, $route) use (&$middlewares, $httpMethod): void {
+                $registeredMiddlewares = $registeredMiddlewares['middlewares'];
                 if (empty($registeredMiddlewares)) {
                     return;
                 }
