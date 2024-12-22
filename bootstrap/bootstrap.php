@@ -2,13 +2,10 @@
 
 declare(strict_types=1);
 
-use App\Application;
-use Laminas\Diactoros\ServerRequestFactory;
+use App\Lib\Application\Application;
 
-$request = ServerRequestFactory::fromGlobals();
-
-return (new Application(
-    $request
-))->withRouting(
-    __DIR__ . '/../routes/http.php',
-)->boot();
+return  Application::singleton()
+        ->withRouting(
+            __DIR__ . '/../routes/http.php',
+        )
+        ->boot();

@@ -27,5 +27,4 @@ $router->setDefaultNamespace('App\Kernels\Http\Controllers');
 |
 */
 
-$router->get('/', ['HomeController', 'index']);
-$router->post('/store', ['HomeController', 'store'], [JsonPayload::class]);
+$router->get('/example/{field1}/shelf/{field2?}', ['HomeController', 'example']);

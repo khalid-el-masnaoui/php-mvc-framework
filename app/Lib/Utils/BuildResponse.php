@@ -10,7 +10,7 @@ use Laminas\Diactoros\Response\HtmlResponse;
 use Laminas\Diactoros\Response\JsonResponse;
 use Laminas\Diactoros\Response\TextResponse;
 use Laminas\Diactoros\Response\EmptyResponse;
-use App\Core\Exceptions\Routes\RequestHandlerInvalidResponseException;
+use App\Lib\Exceptions\Routes\RequestHandlerInvalidResponseException;
 
 final class BuildResponse
 {
@@ -35,16 +35,16 @@ final class BuildResponse
             return $response;
         }
 
-        if (Helpers::isHTML($response)) {
-            return new HtmlResponse($response);
-        }
-
         if (is_string($response)) {
             return new TextResponse($response);
         }
 
         if (is_array($response)) {
             return new JsonResponse($response);
+        }
+
+        if (Helpers::isHTML($response)) {
+            return new HtmlResponse($response);
         }
 
         //returning collections and entities, models ...

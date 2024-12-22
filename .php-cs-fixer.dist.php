@@ -12,8 +12,8 @@ return (new PhpCsFixer\Config())
 
         'binary_operator_spaces' => [
             'operators' => [
-                '=>' => 'align',
-                '='  => 'align'
+                '=>' => 'align_single_space',
+                '='  => 'align_single_space'
             ]
         ],
         // 'blank_line_after_opening_tag' => true,
@@ -98,5 +98,4 @@ return (new PhpCsFixer\Config())
         // 'single_blank_line_at_eof' => false
     ])
     // ->setIndent("\t")
-    ->setLineEnding("\n")
-;
+    ->setLineEnding("\n");

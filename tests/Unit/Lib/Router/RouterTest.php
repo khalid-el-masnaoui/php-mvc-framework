@@ -4,20 +4,19 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Lib\Router;
 
-use App\Core\Enums\EnumToArrayTrait;
 use Mockery;
 use App\Lib\Router\Router;
 use PHPUnit\Framework\TestCase;
-use App\Core\Attributes\Routes\Get;
-use App\Core\Attributes\Routes\Route;
+use App\Lib\Attributes\Routes\Get;
+use App\Lib\Enums\EnumToArrayTrait;
+use App\Lib\Attributes\Routes\Route;
 use Psr\Container\ContainerInterface;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\Attributes\CoversClass;
-use App\Core\Attributes\Middlewares\GetMiddleware;
-use App\Core\Attributes\Middlewares\Middleware;
-use App\Kernels\Http\Middlewares\SetAttributesMiddleware;
-use Psr\Http\Server\MiddlewareInterface;
+use App\Lib\Attributes\Middlewares\Middleware;
+use App\Lib\Attributes\Middlewares\GetMiddleware;
+use App\Lib\Psr15\Middlewares\SetAttributesMiddleware;
 
 #[CoversClass(Router::class)]
 #[UsesClass(Route::class)]
@@ -44,51 +43,25 @@ final class RouterTest extends TestCase
     }
 
     #[Test]
-    public function itRegistersRoutesFromControllersAttributes(): void
+    public function itRegistersRoutesAndMiddlewaresFromControllersAttributes(): void
     {
         $controller = new class () {
-            #[Get('/test')]
+            #[Get('/test', 'testRoute')]
+            #[GetMiddleware([SetAttributesMiddleware::class], 'testRoute')]
             public function index(): void
             {
             }
         };
 
-        $this->router?->registerRoutesFromControllerAttributes(([$controller::class]));
+        $this->router?->registerRoutesAndMiddlewaresFromControllerAttributes(([$controller::class]));
 
-        $expected = [
-            'GET' => [
-                '/test' => [
-                    0 => $controller::class,
-                    1 => 'index'
-                ]
-            ]
-        ];
+        $expectedHandler     = [0 => $controller::class, 1 => 'index'];
+        $expectedMiddlewares = [SetAttributesMiddleware::class];
 
-        $this->assertEquals($expected, $this->router?->getRoutes());
-    }
+        $actualHandler     = $this->router?->getRoutes()['GET']['/test']['handler'];
+        $actualMiddlewares = $this->router?->getRoutes()['GET']['/test']['middlewares'];
 
-    #[Test]
-    public function itRegistersMiddlewaresFromControllersAttributes(): void
-    {
-        /** @var MiddlewareInterface */
-
-        $controller = new class () {
-            #[GetMiddleware('/test', [SetAttributesMiddleware::class])]
-            public function index(): void
-            {
-            }
-        };
-
-        $this->router?->registerMiddlewaresFromControllerAttributes(([$controller::class]));
-
-        $expected = [
-            'GET' => [
-                '/test' => [
-                    0 => SetAttributesMiddleware::class,
-                ]
-            ]
-        ];
-
-        $this->assertEquals($expected, $this->router?->getMiddlewares());
+        $this->assertEquals($expectedHandler, $actualHandler);
+        $this->assertEquals($expectedMiddlewares, $actualMiddlewares);
     }
 }
