@@ -17,3 +17,11 @@ parameters:
 			identifier: new.static
 			paths:
 				- app/Kernels//Kernel.php
+		-
+			identifier: argument.type
+			paths:
+				- app/Lib/Helpers/ClassFinder.php
+		-
+			identifier: missingType.generics
+			paths:
+				- app/Lib/Helpers/ClassFinder.php

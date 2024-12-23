@@ -34,3 +34,12 @@ function env(string $key, mixed $default = null): mixed
 
     return $value;
 }
+
+function isHtml(mixed $text): bool
+{
+    $processed = htmlentities((string) $text);
+    if ($processed === $text) {
+        return false;
+    }
+    return true;
+}

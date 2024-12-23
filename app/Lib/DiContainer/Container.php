@@ -9,6 +9,10 @@ use Psr\Container\ContainerInterface;
 
 class Container implements ContainerInterface
 {
+    public function __construct()
+    {
+        $this->set(ContainerInterface::class, Container::class);
+    }
     /** @var mixed[] */
     private array $entries = [];
 

@@ -1,6 +1,6 @@
 <?php
 
-use App\Kernels\Kernel;
+use App\Kernels\Http\Kernel;
 use App\Lib\Router\Router;
 use Middlewares\JsonPayload;
 

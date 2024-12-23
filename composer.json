@@ -24,7 +24,8 @@
         "middlewares/encoder": "^2.1",
         "middlewares/shutdown": "^2.0",
         "middlewares/honeypot": "^2.0",
-        "hassankhan/config": "^3.2"
+        "hassankhan/config": "^3.2",
+        "symfony/finder": "^6.4"
     },
     "require-dev": {
         "symfony/var-dumper": "^6.4",
@@ -44,7 +45,8 @@
             "App\\": "app/"
         },
         "files": [
-            "app/Lib/Utils/Functions.php"
+            "app/Lib/Utils/Functions.php",
+            "app/Lib/Helpers/Helpers.php"
         ]
     },
     "autoload-dev": {
