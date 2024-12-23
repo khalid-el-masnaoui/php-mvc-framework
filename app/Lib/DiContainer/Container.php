@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Lib\DiContainer;
 
-use App\Lib\Exceptions\Container\ContainerException;
+use App\Lib\Exceptions\DiContainer\ContainerException;
 use Psr\Container\ContainerInterface;
 
 class Container implements ContainerInterface
