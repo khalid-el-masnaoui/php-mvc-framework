@@ -2,9 +2,8 @@
 
 declare(strict_types=1);
 
-namespace App\Lib\Utils;
+namespace App\Lib\Application\Support;
 
-use App\Lib\Utils\Helpers;
 use Psr\Http\Message\ResponseInterface;
 use Laminas\Diactoros\Response\HtmlResponse;
 use Laminas\Diactoros\Response\JsonResponse;
@@ -12,7 +11,7 @@ use Laminas\Diactoros\Response\TextResponse;
 use Laminas\Diactoros\Response\EmptyResponse;
 use App\Lib\Exceptions\Routes\RequestHandlerInvalidResponseException;
 
-final class BuildResponse
+final class ResponseBuilder
 {
     /** @param mixed[] $args */
     public static function __callStatic(string $method, array $args = []): ResponseInterface
@@ -22,9 +21,9 @@ final class BuildResponse
     }
 
     /** @throws RequestHandlerInvalidResponseException */
-    private function get(mixed $response, bool $found = true): ResponseInterface
+    private function make(mixed $response, bool $notFound = false): ResponseInterface
     {
-        if ($found === false) {
+        if ($notFound === true) {
             return new TextResponse('Not Found', 404);
         }
 
@@ -35,16 +34,16 @@ final class BuildResponse
             return $response;
         }
 
+        if (isHTML($response)) {
+            return new HtmlResponse($response);
+        }
+
         if (is_string($response)) {
             return new TextResponse($response);
         }
 
         if (is_array($response)) {
             return new JsonResponse($response);
-        }
-
-        if (Helpers::isHTML($response)) {
-            return new HtmlResponse($response);
         }
 
         //returning collections and entities, models ...

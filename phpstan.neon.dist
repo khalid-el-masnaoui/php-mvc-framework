@@ -9,11 +9,16 @@ parameters:
 			paths:
 				- app/Lib/Router/
 		-
-			identifier: staticClassAccess.privateProperty
+			identifier: argument.type
 			paths:
-				- app/Lib/Application/Container/AppContainer.php
-				- app/Kernels//Kernel.php
+				- app/Lib/Helpers/ClassFinder.php
 		-
-			identifier: new.static
+			identifier: missingType.generics
 			paths:
-				- app/Kernels//Kernel.php
+				- app/Lib/Helpers/ClassFinder.php
+		-
+			identifier: constant.notFound
+		-
+			identifier: staticMethod.notFound
+			paths:
+				- app/

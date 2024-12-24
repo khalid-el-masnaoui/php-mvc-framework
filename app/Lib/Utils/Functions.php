@@ -2,35 +2,11 @@
 
 declare(strict_types=1);
 
-function env(string $key, mixed $default = null): mixed
+function isHtml(mixed $text): bool
 {
-    $value = $_ENV[$key] ?? false;
-
-    if ($value === false) {
-        return $default;
+    $processed = htmlentities((string) $text);
+    if ($processed === $text) {
+        return false;
     }
-
-    switch (strtolower($value)) {
-        case 'true':
-        case '(true)':
-            return true;
-
-        case 'false':
-        case '(false)':
-            return false;
-
-        case 'empty':
-        case '(empty)':
-            return '';
-
-        case 'null':
-        case '(null)':
-            return null;
-    }
-
-    if (str_starts_with($value, '"') && str_ends_with($value, '"')) {
-        return substr($value, 1, -1);
-    }
-
-    return $value;
+    return true;
 }

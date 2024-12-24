@@ -5,13 +5,13 @@ declare(strict_types=1);
 namespace App\Lib\Router;
 
 use App\Lib\Enums\HttpMethod;
-use App\Lib\Utils\BuildResponse;
+use App\Lib\Application\Facades\App;
 use App\Lib\Attributes\Routes\Route;
-use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use App\Lib\Attributes\Middlewares\Middleware;
+use App\Lib\Application\Support\ResponseBuilder;
 use App\Lib\Exceptions\Routes\RequestHttpMethodUnSupportedException;
 
 /**
@@ -33,10 +33,6 @@ class Router implements RequestHandlerInterface
     protected array $currentGroupMiddlewares = [];
 
     protected string $defaultNamespace = '';
-
-    public function __construct(private ContainerInterface $container)
-    {
-    }
 
     /** @return array<string,array<string,array<string, mixed>>> */
     public function getRoutes(): array
@@ -105,26 +101,28 @@ class Router implements RequestHandlerInterface
         return $parsedMethod;
     }
 
-    public function loadFrom(string $filename): void
+    /** @return array{0:array<string,mixed>, 1:string[]|int[]} */
+    protected function matchRoute(string $method, string $path): array
     {
-        if (file_exists($filename)) {
-            /** @var $router */
-            require_once $filename;
+        $route     = [];
+        $arguments = [];
+        if (isset($this->routes[$method][$path])) {
+            $route = $this->routes[$method][$path];
+        } else {
+            // Check against all regex routes.
+            foreach ($this->routes[$method] as $routePath => $routeData) {
+                if (isset($routeData['regex']) && preg_match("/{$routeData['regex']}/", $path, $matches)) {
+                    array_shift($matches); // Remove the full match
+                    $matches   = array_map(fn ($m) => ltrim($m, '/'), $matches);
+                    $route     = $routeData;
+                    $arguments = array_combine($route['parameters'], array_pad($matches, count($route['parameters']), null));
 
-            $currentRoutes = $this->getRoutes();
-            $loadedRoutes  = $router->getRoutes();
-
-            $newRoutes      = [];
-            foreach (HttpMethod::values() as $method) {
-                $paths = array_merge(array_keys($currentRoutes[$method] ?? []), array_keys($loadedRoutes[$method] ?? []));
-
-                foreach ($paths as $path) {
-                    $newRoutes[$method][$path]  = array_merge($currentRoutes[$method][$path] ?? [], $loadedRoutes[$method][$path] ?? []);
+                    break;
                 }
             }
-
-            $this->routes      = $newRoutes; // @phpstan-ignore assign.propertyType
         }
+
+        return [$route, $arguments];
     }
 
     /**
@@ -280,28 +278,37 @@ class Router implements RequestHandlerInterface
         }
     }
 
-    public function handle(ServerRequestInterface $request): ResponseInterface
+    /** @param string[] $filenames */
+    public function loadFrom(array $filenames): void
     {
-        [$path,,]                        = $this->parseRoute($request->getUri()->getPath());
-        $method                          = $this->parseMethod($request->getMethod());
+        foreach ($filenames as $filename) {
+            if (file_exists($filename)) {
+                /** @var $router */
+                require_once $filename;
 
-        $arguments = [];
-        $route     = [];
-        if (isset($this->routes[$method][$path])) {
-            $route = $this->routes[$method][$path];
-        } else {
-            // Check against all regex routes.
-            foreach ($this->routes[$method] as $routePath => $routeData) {
-                if (isset($routeData['regex']) && preg_match("/{$routeData['regex']}/", $path, $matches)) {
-                    array_shift($matches); // Remove the full match
-                    $matches   = array_map(fn ($m) => ltrim($m, '/'), $matches);
-                    $route     = $routeData;
-                    $arguments = array_combine($route['parameters'], array_pad($matches, count($route['parameters']), null));
+                $currentRoutes = $this->getRoutes();
+                $loadedRoutes  = $router->getRoutes();
 
-                    break;
+                $newRoutes = [];
+                foreach (HttpMethod::values() as $method) {
+                    $paths = array_merge(array_keys($currentRoutes[$method] ?? []), array_keys($loadedRoutes[$method] ?? []));
+
+                    foreach ($paths as $path) {
+                        $newRoutes[$method][$path] = array_merge($currentRoutes[$method][$path] ?? [], $loadedRoutes[$method][$path] ?? []);
+                    }
                 }
+
+                $this->routes = $newRoutes; // @phpstan-ignore assign.propertyType
             }
         }
+    }
+
+    public function handle(ServerRequestInterface $request): ResponseInterface
+    {
+        [$path,,]                        = $this->parseRoute($request->getUri()->getPath(), true);
+        $method                          = $this->parseMethod($request->getMethod());
+
+        [$route,$arguments]     = $this->matchRoute($method, $path);
 
         $handler = $route['handler'] ?? [];
 
@@ -316,26 +323,27 @@ class Router implements RequestHandlerInterface
     */
     protected function dispatch(object|callable|array $handler, array $args = []): ResponseInterface
     {
-        $found = true;
+        $notFound = true;
 
         $controllerResponse = '';
         if (is_callable($handler)) {
             $controllerResponse = call_user_func($handler, $args);
+            $notFound           = false;
         } else {
             if (empty($handler) || !is_array($handler)) {
-                $found   = false;
                 $handler = ['', ''];
             }
             [$class, $method] = $handler;
 
             if (class_exists($class)) {
-                $class = $this->container->get($class);
+                $class = App::get($class);
 
                 if (method_exists($class, $method)) {
                     $controllerResponse = call_user_func_array([$class, $method], $args); // @phpstan-ignore argument.type
+                    $notFound           = false;
                 }
             }
         }
-        return BuildResponse::get($controllerResponse, $found); // @phpstan-ignore method.staticCall
+        return ResponseBuilder::make($controllerResponse, $notFound); // @phpstan-ignore method.staticCall
     }
 }

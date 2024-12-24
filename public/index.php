@@ -2,7 +2,9 @@
 
 declare(strict_types=1);
 
-require_once __DIR__ . '/../vendor/autoload.php';
+define('APP_ROOT', dirname(__DIR__));
 
-$app = require_once __DIR__ . '/../bootstrap/bootstrap.php';
+require_once APP_ROOT . '/vendor/autoload.php';
+
+$app = require_once APP_ROOT . '/bootstrap/bootstrap.php';
 $app->run();
