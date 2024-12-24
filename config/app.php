@@ -72,4 +72,8 @@ return [
         'maintenance'  => env('APP_MAINTENANCE', false),
     ],
 
+    'providers' => [
+        App\Providers\AppServiceProvider::class
+    ]
+
 ];

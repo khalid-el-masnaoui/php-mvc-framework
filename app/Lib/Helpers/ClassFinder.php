@@ -72,8 +72,7 @@ final class ClassFinder implements IteratorAggregate, Countable
     {
         if ($this->implements !== null || $this->extends != null) {
             throw new Exception(
-                'Can not set a custom filter and filter ' .
-                'by `implements` or `extends`!'
+                'Can not set a custom filter and filter by `implements` or `extends`!'
             );
         }
 

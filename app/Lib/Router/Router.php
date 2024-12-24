@@ -5,13 +5,13 @@ declare(strict_types=1);
 namespace App\Lib\Router;
 
 use App\Lib\Enums\HttpMethod;
-use App\Lib\Application\Support\ResponseBuilder;
+use App\Lib\Application\Facades\App;
 use App\Lib\Attributes\Routes\Route;
-use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use App\Lib\Attributes\Middlewares\Middleware;
+use App\Lib\Application\Support\ResponseBuilder;
 use App\Lib\Exceptions\Routes\RequestHttpMethodUnSupportedException;
 
 /**
@@ -33,10 +33,6 @@ class Router implements RequestHandlerInterface
     protected array $currentGroupMiddlewares = [];
 
     protected string $defaultNamespace = '';
-
-    public function __construct(private ContainerInterface $container)
-    {
-    }
 
     /** @return array<string,array<string,array<string, mixed>>> */
     public function getRoutes(): array
@@ -340,7 +336,7 @@ class Router implements RequestHandlerInterface
             [$class, $method] = $handler;
 
             if (class_exists($class)) {
-                $class = $this->container->get($class);
+                $class = App::get($class);
 
                 if (method_exists($class, $method)) {
                     $controllerResponse = call_user_func_array([$class, $method], $args); // @phpstan-ignore argument.type

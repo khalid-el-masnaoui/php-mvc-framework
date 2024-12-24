@@ -2,10 +2,8 @@
 
 declare(strict_types=1);
 
-use App\Lib\Application\Application;
-
-return  Application::singleton()
+return  app()
         ->withRouting(
-            __DIR__ . '/../routes/http.php',
+            APP_ROOT . '/routes/http.php',
         )
         ->boot();

@@ -2,18 +2,23 @@
 
 namespace App\Lib\Application\Support;
 
-use Laminas\Diactoros\Exception;
+use App\Lib\Router\Router;
 use Laminas\Diactoros\Response;
-use Psr\Http\Message\ResponseInterface;
+use Laminas\Diactoros\Exception;
 use Psr\Http\Message\UriInterface;
+use Psr\Http\Message\ResponseInterface;
 
 class Redirect extends Response
 {
+    public function __construct()
+    {
+    }
+
     /**
      * @param string|UriInterface $redirectLink
      * @param array<int,string|int> $headers
     */
-    public function redirect(string|UriInterface $redirectLink, int $status = 302, array $headers = []): ResponseInterface
+    public function redirect(string|UriInterface $redirectLink, int $status = 302, array $headers = []): Redirect
     {
         if (!is_string($redirectLink) && !$redirectLink instanceof UriInterface) { // @phpstan-ignore booleanAnd.alwaysFalse
             throw new Exception\InvalidArgumentException(sprintf(
@@ -29,8 +34,14 @@ class Redirect extends Response
         return $this;
     }
 
-    public function back(): ResponseInterface
+    public function back(): Redirect
     {
         return $this->redirect($_SERVER['HTTP_REFERER'] ?? '');
     }
+
+    // public function route(string $routeName): Redirect
+    // {
+    //     $path = app()->get(Router::class)->getRoute($routeName);
+    //     return $this->redirect($_SERVER['HTTP_REFERER'] ?? '');
+    // }
 }

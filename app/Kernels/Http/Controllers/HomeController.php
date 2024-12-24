@@ -27,8 +27,8 @@ class HomeController
     #[GetMiddleware([SetAttributesMiddleware::class], null, '/')]
     public function index(ServerRequestInterface $request): ResponseInterface
     {
-        $redirect = new Redirect();
-        return $redirect->back();
+        // $redirect = new Redirect();
+        return back();
         // throw new \Exception("Error Processing Request", 501);
         // return new HtmlResponse((string) View::make('index'), 200, ['special-header' => 'special-header-value']);
 

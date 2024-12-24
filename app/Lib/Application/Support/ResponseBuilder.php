@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Lib\Application\Support;
 
-use App\Lib\Utils\Helpers;
 use Psr\Http\Message\ResponseInterface;
 use Laminas\Diactoros\Response\HtmlResponse;
 use Laminas\Diactoros\Response\JsonResponse;

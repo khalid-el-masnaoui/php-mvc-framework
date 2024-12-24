@@ -18,8 +18,6 @@ use Middlewares\ErrorHandler;
 use App\Kernels\KernelInterface;
 use App\Lib\Helpers\ClassFinder;
 use Middlewares\ContentEncoding;
-use App\Lib\DiContainer\Container;
-use Psr\Container\ContainerInterface;
 use App\Lib\Psr15\Dispatcher\Dispatcher;
 use Psr\Http\Server\MiddlewareInterface;
 use Laminas\Diactoros\ServerRequestFactory;
@@ -32,8 +30,6 @@ use App\Lib\Psr15\Middlewares\Errors\CustomJsonErrorFormatter;
 
 final class Kernel implements KernelInterface
 {
-    private static ?ContainerInterface $container = null;
-
     private static ?Config $config = null;
 
     private static ?Router $router = null;
@@ -55,7 +51,6 @@ final class Kernel implements KernelInterface
     /** @inheritDoc */
     public function boot(array $routesFiles = []): static
     {
-        $this->getContainer();
         $this->getConfig();
         $this->getRouter($routesFiles);
         $this->getDispatcher();
@@ -70,30 +65,16 @@ final class Kernel implements KernelInterface
         $this->getResponseEmitter()->emit($this->getDispatcher()->dispatch($request));
     }
 
-    public static function getContainer(): ContainerInterface
-    {
-        if (self::$container !== null) {
-            return self::$container;
-        }
-
-        $container = new Container();
-        // $container->set(Config::class, concrete: Kernel::getConfig());
-
-        self::$container = $container;
-
-        return self::$container;
-    }
-
     public static function getConfig(): Config
     {
         if (self::$config !== null) {
             return self::$config;
         }
 
-        $dotenv = Dotenv::createImmutable(__DIR__ . '/../../../');
+        $dotenv = Dotenv::createImmutable(APP_ROOT);
         $dotenv->load();
 
-        self::$config = new Config(__DIR__ . '/../../../config');
+        self::$config = new Config(APP_ROOT . '/config');
 
         return self::$config;
     }
@@ -105,7 +86,7 @@ final class Kernel implements KernelInterface
             return self::$router;
         }
 
-        self::$router = Kernel::getContainer()->get(Router::class);
+        self::$router = app()->get(Router::class);
 
         //load and register routes and their middlewares (from file and attributes)
         Kernel::registerRoutesAndMiddlewaresFromAttributes();
@@ -138,7 +119,7 @@ final class Kernel implements KernelInterface
 
     private static function registerRoutesAndMiddlewaresFromAttributes(): void
     {
-        $composerLoader = require __DIR__ . '/../../../vendor/autoload.php';
+        $composerLoader = require APP_ROOT . '/vendor/autoload.php';
 
         $finder = new ClassFinder($composerLoader);
 

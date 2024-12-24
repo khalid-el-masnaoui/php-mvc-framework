@@ -1,8 +1,6 @@
 <?php
 
-use App\Kernels\Http\Kernel;
 use App\Lib\Router\Router;
-use Middlewares\JsonPayload;
 
 /*
 |--------------------------------------------------------------------------
@@ -14,8 +12,7 @@ use Middlewares\JsonPayload;
 |
 */
 
-$container = Kernel::getContainer();
-$router    = $container->get(Router::class);
+$router    = app()->get(Router::class);
 
 $router->setDefaultNamespace('App\Kernels\Http\Controllers');
 
